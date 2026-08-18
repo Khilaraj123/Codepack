@@ -1,0 +1,50 @@
+# 📦 CodePack
+
+> **Pack your entire codebase into a single, LLM-ready text file — 100% locally in your browser.**
+
+CodePack is a privacy-first, client-side web utility designed to inspect, filter, and package local software projects into structured text summaries optimized for LLMs (ChatGPT, Claude, Gemini, etc.), code reviews, or backups.
+
+---
+
+## ✨ Features
+
+- **🔒 100% Client-Side & Private:** Your code never touches a server. All file parsing, filtering, and text generation happen entirely within your browser.
+- **📁 Drag & Drop Folder Traversal:** Recursively reads local project directories using modern browser File System APIs.
+- **⚡ Smart Filtering:** Automatically excludes noise (e.g., `node_modules`, `.git`, lockfiles, binary assets, image formats).
+- **🎯 Category Toggles:** Quickly filter files by category (e.g., UI vs. Logic files).
+- **🌲 Visual Directory Tree:** Generates a clean ASCII directory structure representing your project layout.
+- **📋 One-Click Export:** Copy directly to your clipboard or download as `.txt` / `.md`.
+- **🌍 Multi-Language Support:** Internationalization ready for global developer support.
+
+---
+
+## 🛠️ Built With
+
+- **HTML5 & CSS3** — Native layout, CSS grid/flexbox, drag-and-drop zone.
+- **Vanilla JavaScript (ES6+)** — Zero external frameworks required.
+- **File System Access API & `webkitGetAsEntry`** — Browser-native recursive folder parsing.
+- **Blob & Clipboard API** — Efficient local file generation and clipboard copying.
+
+---
+
+## 📂 Project Structure
+
+```text
+codepack/
+├── index.html          # Application UI & layout
+├── style.css           # Styling and visual design
+├── favicon.ico         # App icon
+│
+├── js/
+│   ├── main.js         # Main orchestrator & event listeners
+│   ├── fileReader.js   # Drag-and-drop & recursive folder parsing logic
+│   ├── fileTree.js     # In-memory file tree state management
+│   ├── filters.js      # Default exclude rules & smart filtering logic
+│   ├── formatter.js    # ASCII tree & text output generator
+│   ├── ui.js           # DOM rendering (file list, preview, stats)
+│   ├── actions.js      # Clipboard copy & download functionality
+│   └── i18n.js         # (Optional) Multilingual translation loader
+│
+└── locales/            # Translation key-value dictionaries
+    ├── en.json
+    └── ne.json
