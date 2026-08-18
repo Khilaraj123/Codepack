@@ -1,45 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Codepack</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div id="drop-overlay" class="drop-overlay">
         <div class="drop-content">
-            <h2>Drop your files and folders here!!</h2>
+            <h2 style="display: none;">Drop your files and folders here!!</h2>
         </div>
     </div>
     <div class="app-container">
         <!-- header -->
-        <header>
+        <header class="app-header">
             <div class="logo">
                 <span class="icon">
-                    
+
                 </span>
                 <h1>Codepacker</h1>
             </div>
+            <p class="tagline">Pack your codebase into an LLM-ready text file — 100% locally in your browser.</p>
         </header>
-        
+
         <!-- main section -->
         <main>
-            <!-- It is going to display file tree and packeged text information seperately -->
-            <div class="file-tree">
+            <section class="panel control-panel">
+                <div id="drop-zone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <span class="upload-icon">📁</span>
+                        <p>Drag and drop your project folder here</p>
+                        <button class="btn-primary">
+                            <span>Browse folder</span>
+                            <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+                        </button>
+                    </div>
+                </div>
 
-            </div>
+                <!-- Filters and Toggles -->
+                <div class="filter-section">
+                    <h3>Filter Options</h3>
+                    <label for="" class="checkbox-label">
+                        <input type="checkbox" name="" id="smart-filter" checked />
+                        Enable Smart Filter <small>(Ignores node_modules, .git, images, etc.)</small>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="include-tree" checked />
+                        Include File Tree Diagram
+                    </label>
+                </div>
+                <div class="file-tree-container">
+                    <div class="tree-header">
+                        <h3>Project Files</h3>
+                        <span id="file-count" class="badge">0 files</span>
+                    </div>
+                    <div id="file-list" class="file-list">
+                        <p class="placeholder-text">No folder loaded yet.</p>
+                    </div>
+                </div>
+            </section>
 
-            <div class="text-info">
-
-            </div>
+            <!-- Right Panel: Output & Actions -->
+            <section class="panel output-panel">
+                <div class="output-header">
+                    <h2>Packaged Output</h2>
+                    <div class="action-buttons">
+                        <button id="copy-btn" class="btn-secondary" disabled>📋 Copy</button>
+                        <button id="download-btn" class="btn-primary" disabled>💾 Download .txt</button>
+                    </div>
+                </div>
+                <textarea id="output-preview" readonly
+                    placeholder="Your formatted code package will appear here..."></textarea>
+            </section>
         </main>
-        
+
         <!-- footer section  -->
         <footer>
-            
+
         </footer>
     </div>
-    <script src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
+
 </html>
