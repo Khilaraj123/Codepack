@@ -41,6 +41,7 @@
                     <div id="github-source" class="input-pane active">
                         <div class="github-input-group">
                             <input type="text" id="github-url-input" placeholder="https://github.com/..." autocomplete="off" spellcheck="false" />
+                            <input type="password" id="github-token-input" placeholder="PAT (Optional)" autocomplete="off" spellcheck="false" style="max-width: 150px; flex: 0 0 150px;" />
                             <button id="github-fetch-btn" class="btn-primary btn-ingest">Ingest</button>
                         </div>
                         <div id="loading-status" class="hidden">
@@ -67,7 +68,7 @@
                         <h4>File Options</h4>
                         <div class="options-group">
                             <label>Exclude</label>
-                            <input type="text" id="exclude-input" class="text-input" value="node_modules, dist, .git, .env, bin, obj" />
+                            <input type="text" id="exclude-input" class="text-input" value="node_modules, dist, .git, .env, bin, obj, package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb" />
                         </div>
                     </div>
                     <div class="options-col examples-col">

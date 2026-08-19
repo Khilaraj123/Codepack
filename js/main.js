@@ -22,6 +22,7 @@ const statFiles = document.getElementById("stat-files");
 const statIncluded = document.getElementById("stat-included");
 const githubFetchBtn = document.getElementById("github-fetch-btn");
 const githubUrlInput = document.getElementById("github-url-input");
+const githubTokenInput = document.getElementById("github-token-input");
 const loadingStatus = document.getElementById("loading-status");
 const loadingText = document.getElementById("loading-text");
 const dropOverlay = document.getElementById("drop-overlay");
@@ -51,7 +52,7 @@ function handleGithubFetch() {
         parsed.repo,
         parsed.branch,
         parsed.subpath,
-        "", // Optional Personal Access Token
+        githubTokenInput.value.trim(),
         (loaded, total) => {
             loadingText.textContent = `Downloading files (${loaded}/${total})...`;
         }
@@ -96,8 +97,9 @@ function updateOutput() {
 
     //enable/disable buttons based on if we have anything to copy or download
     const hasContent = contentsText.trim().length > 0;
+    const hasTree = treeText.trim().length > 0;
     copyBtn.disabled = !hasContent;
-    copyTreeBtn.disabled = !treeText.trim().length;
+    copyTreeBtn.disabled = !hasTree;
     downloadBtn.disabled = !hasContent;
 }
 
@@ -137,46 +139,73 @@ document.querySelectorAll(".pill-btn").forEach(btn => {
 //FOlder Input Selection
 folderInput.addEventListener("change", async (e) => {
     if (e.target.files.length > 0) {
-        const files = await readInputFolder(e.target.files);
+        githubFetchBtn.disabled = true;
+        loadingStatus.classList.remove("hidden");
+        loadingText.textContent = "Processing local files...";
+        
+        const files = await readInputFolder(e.target.files, (done, total) => {
+            loadingText.textContent = `Reading files (${done}/${total})...`;
+        });
+        
         handleLoadedFiles(files);
+        githubFetchBtn.disabled = false;
+        loadingStatus.classList.add("hidden");
     }
 });
 
 //drag and drop
+let dragCounter = 0;
+
 window.addEventListener("dragenter", (e) => {
     e.preventDefault();
+    dragCounter++;
     dropOverlay.classList.remove("hidden");
 });
+
+dropOverlay.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    dragCounter++;
+});
+
 dropOverlay.addEventListener("dragleave", (e) => {
     e.preventDefault();
-    dropOverlay.classList.add("hidden");
+    dragCounter--;
+    if (dragCounter === 0) {
+        dropOverlay.classList.add("hidden");
+    }
 });
+
 dropOverlay.addEventListener("dragover", (e) => e.preventDefault());
 dropOverlay.addEventListener("drop", async (e) => {
     e.preventDefault();
+    dragCounter = 0;
     dropOverlay.classList.add("hidden");
     if (e.dataTransfer.items) {
-        const files = await readDroppedFolder(e.dataTransfer.items);
+        githubFetchBtn.disabled = true;
+        loadingStatus.classList.remove("hidden");
+        loadingText.textContent = "Processing dropped files...";
+        
+        const files = await readDroppedFolder(e.dataTransfer.items, (done, total) => {
+            loadingText.textContent = `Reading files (${done}/${total})...`;
+        });
+        
         handleLoadedFiles(files);
+        githubFetchBtn.disabled = false;
+        loadingStatus.classList.add("hidden");
     }
 });
 
-dropZone.addEventListener("dragover", (e) => e.preventDefault());
-dropZone.addEventListener("drop", async (e) => {
-    e.preventDefault();
-    if (e.dataTransfer.items) {
-        const files = await readDroppedFolder(e.dataTransfer.items);
-        handleLoadedFiles(files);
-    }
-});
-
-//Filter and option Toggles
+//Filter and option Toggles (Debounced)
+let filterTimeout;
 excludeInput.addEventListener("input", () => {
-    if (loadedFiles.length > 0) {
-        loadedFiles = applySmartFilter(loadedFiles, excludeInput.value);
-        renderFileList(loadedFiles, fileListContainer, updateOutput);
-        updateOutput();
-    }
+    clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(() => {
+        if (loadedFiles.length > 0) {
+            loadedFiles = applySmartFilter(loadedFiles, excludeInput.value);
+            renderFileList(loadedFiles, fileListContainer, updateOutput);
+            updateOutput();
+        }
+    }, 300);
 });
 
 // Clipboard Actions
