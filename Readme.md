@@ -33,7 +33,6 @@ CodePack is a privacy-first, client-side web utility designed to inspect, filter
 codepack/
 ├── index.html          # Application UI & layout
 ├── style.css           # Styling and visual design
-├── favicon.ico         # App icon
 │
 ├── js/
 │   ├── main.js         # Main orchestrator & event listeners
@@ -41,10 +40,4 @@ codepack/
 │   ├── fileTree.js     # In-memory file tree state management
 │   ├── filters.js      # Default exclude rules & smart filtering logic
 │   ├── formatter.js    # ASCII tree & text output generator
-│   ├── ui.js           # DOM rendering (file list, preview, stats)
-│   ├── actions.js      # Clipboard copy & download functionality
-│   └── i18n.js         # (Optional) Multilingual translation loader
-│
-└── locales/            # Translation key-value dictionaries
-    ├── en.json
-    └── ne.json
+│   └── ui.js           # DOM rendering (file list, preview, stats)

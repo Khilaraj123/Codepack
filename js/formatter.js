@@ -17,7 +17,8 @@ export function formatContent(files) {
         output += `================================================\n`;
         output += `File: ${file.path}\n`;
         output += `================================================\n`;
-        output += `${file.content || "(empty file)"}\n\n`;
+        const contentMessage = file.content === "" ? "(empty file)" : (file.content || "(binary/failed to read)");
+        output += `${contentMessage}\n\n`;
     }
 
     return output;

@@ -1,9 +1,6 @@
 //func to render file list with checkboxes for toggling inclusion
-export function renderFileList(loadedFiles, fileListContainer, fileCountBadge, updateOutput){
+export function renderFileList(loadedFiles, fileListContainer, updateOutput){
     fileListContainer.innerHTML = "";
-
-    const includedCount = loadedFiles.filter(f => f.included).length;
-    fileCountBadge.textContent = `${includedCount}/${loadedFiles.length} files`;
 
     if(loadedFiles.length === 0){
         fileListContainer.innerHTML = '<p class="placeholder-text">No Folder loaded yet.</p>';
@@ -30,8 +27,6 @@ export function renderFileList(loadedFiles, fileListContainer, fileCountBadge, u
         checkbox.addEventListener("change", () => {
             loadedFiles[index].included = checkbox.checked;
             item.classList.toggle("excluded", !checkbox.checked);
-            const activeCount = loadedFiles.filter(f => f.included).length;
-            fileCountBadge.textContent = `${activeCount}/${loadedFiles.length} files`;
             if (typeof updateOutput === 'function') {
                 updateOutput();
             }

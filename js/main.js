@@ -20,6 +20,11 @@ const copyTreeBtn = document.getElementById("copy-tree-btn");
 const downloadBtn = document.getElementById("download-btn");
 const statFiles = document.getElementById("stat-files");
 const statIncluded = document.getElementById("stat-included");
+const githubFetchBtn = document.getElementById("github-fetch-btn");
+const githubUrlInput = document.getElementById("github-url-input");
+const loadingStatus = document.getElementById("loading-status");
+const loadingText = document.getElementById("loading-text");
+const dropOverlay = document.getElementById("drop-overlay");
 
 
 // Handle GitHub Repositories
@@ -66,8 +71,9 @@ function handleGithubFetch() {
 //processes incoming raw file data and refreshes UI
 function handleLoadedFiles(rawFiles) {
     if (!rawFiles || rawFiles.length === 0) return;
+    const smartFilterActive = smartFilterCheckbox.checked;
     loadedFiles = applySmartFilter(rawFiles, smartFilterActive);
-    renderFileList(loadedFiles, fileListContainer, null, updateOutput);
+    renderFileList(loadedFiles, fileListContainer, updateOutput);
     updateOutput();
 }
 
@@ -102,7 +108,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
         document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
 
         btn.classList.add("active");
-        document.getElementById(btn.dataset.tab).classList.add("active");
+        document.getElementById(btn.dataset.view).classList.add("active");
     });
 });
 
@@ -115,6 +121,24 @@ folderInput.addEventListener("change", async (e) => {
 });
 
 //drag and drop
+window.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    dropOverlay.classList.remove("hidden");
+});
+dropOverlay.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    dropOverlay.classList.add("hidden");
+});
+dropOverlay.addEventListener("dragover", (e) => e.preventDefault());
+dropOverlay.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    dropOverlay.classList.add("hidden");
+    if (e.dataTransfer.items) {
+        const files = await readDroppedFolder(e.dataTransfer.items);
+        handleLoadedFiles(files);
+    }
+});
+
 dropZone.addEventListener("dragover", (e) => e.preventDefault());
 dropZone.addEventListener("drop", async (e) => {
     e.preventDefault();
@@ -128,14 +152,36 @@ dropZone.addEventListener("drop", async (e) => {
 smartFilterCheckbox.addEventListener("change", () => {
     if (loadedFiles.length > 0) {
         loadedFiles = applySmartFilter(loadedFiles, smartFilterCheckbox.checked);
-        renderFileList(loadedFiles, fileListContainer, fileCountBadge, updateOutput);
+        renderFileList(loadedFiles, fileListContainer, updateOutput);
         updateOutput();
     }
 });
 
 // Clipboard Actions
-copyBtn.addEventListener("click", () => navigator.clipboard.writeText(outputPreview.value));
-copyTreeBtn.addEventListener("click", () => navigator.clipboard.writeText(asciiTreePreview.textContent));
+async function copyToClipboard(text, btn) {
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+        }
+        const originalText = btn.textContent;
+        btn.textContent = "📋 Copied!";
+        setTimeout(() => btn.textContent = originalText, 2000);
+    } catch (err) {
+        console.error("Failed to copy", err);
+    }
+}
+
+copyBtn.addEventListener("click", () => copyToClipboard(outputPreview.value, copyBtn));
+copyTreeBtn.addEventListener("click", () => copyToClipboard(asciiTreePreview.textContent, copyTreeBtn));
 
 //Download as text file
 downloadBtn.addEventListener("click", () => {
@@ -147,7 +193,8 @@ downloadBtn.addEventListener("click", () => {
     a.download = "codepack-contents.txt";
     document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
 });
 
 

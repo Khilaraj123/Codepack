@@ -42,11 +42,18 @@ async function readFileContent(file) {
         const buffer = await file.slice(0, 1000).arrayBuffer();
         const bytes = new Uint8Array(buffer);
 
-        //Check for null bytes
+        // Check for non-printable control characters
+        let nonPrintable = 0;
         for (let i = 0; i < bytes.length; i++) {
-            if (bytes[i] === 0) {
-                return null; //Null byte found -> Binary file
+            const b = bytes[i];
+            if (b < 32 && b !== 9 && b !== 10 && b !== 13) {
+                nonPrintable++;
             }
+        }
+        
+        // If more than 10% of characters are non-printable, consider it binary
+        if (bytes.length > 0 && (nonPrintable / bytes.length > 0.1)) {
+            return null;
         }
         //Not binary -> Read as UTF-8
         return await file.text();

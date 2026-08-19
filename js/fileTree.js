@@ -21,7 +21,13 @@ export function buildAsciiTree(filePaths){
     //Render tree recursively
     function render(node, prefix = ""){
         let output = "";
-        const keys = Object.keys(node);
+        const keys = Object.keys(node).sort((a, b) => {
+            const aIsDir = node[a] !== null;
+            const bIsDir = node[b] !== null;
+            if (aIsDir && !bIsDir) return -1;
+            if (!aIsDir && bIsDir) return 1;
+            return a.localeCompare(b);
+        });
 
         keys.forEach((key, index) => {
             const isLast = index === keys.length - 1;

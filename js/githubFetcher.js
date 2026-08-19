@@ -4,7 +4,8 @@ export function parseGithubUrl(inputUrl) {
     if (!url) return null;
 
     //strip protocol and domain if present
-    url = url.replace(/^https?:\/\//, "").replace(/^github\.com\//, "");
+    url = url.replace(/^(https?:\/\/)?(www\.)?github\.com\//, "");
+    url = url.replace(/^git@github\.com:/, "");
 
     const parts = url.split("/").filter(Boolean);
     if (parts.length < 2) return null;
@@ -55,7 +56,7 @@ export function fetchGithubRepo(owner, repo, branch = "main", subpath = "", toke
 
             // Filter by subpath if user provided a specific folder path
             if (subpath) {
-                files = files.filter(item => item.path.startsWith(subpath));
+                files = files.filter(item => item.path.startsWith(subpath + "/") || item.path === subpath);
             }
             let loadedCount = 0;
 
@@ -67,10 +68,26 @@ export function fetchGithubRepo(owner, repo, branch = "main", subpath = "", toke
                 function next() {
                     if (index >= items.length) return Promise.resolve();
                     const item = items[index++];
+                    
+                    const MAX_SIZE = 1000000; // 1MB
+                    if (item.size > MAX_SIZE) {
+                        loadedCount++;
+                        if (onProgress) onProgress(loadedCount, items.length);
+                        results.push({
+                            path: item.path,
+                            name: item.path.split("/").pop(),
+                            content: null,
+                            isBinary: true,
+                            size: item.size || 0
+                        });
+                        return next();
+                    }
+
                     const fileUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`;
 
                     return fetch(fileUrl)
-                        .then(res => (res.ok ? res.text() : null))
+                        .then(res => (res.ok ? res.text() : Promise.resolve(null)))
+                        .catch(() => null)
                         .then(content => {
                             loadedCount++;
                             if (onProgress) {
