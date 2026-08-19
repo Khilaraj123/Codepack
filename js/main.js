@@ -34,7 +34,7 @@ function updateOutput(){
     const includeTree = includeTreeCheckbox.checked;
     const formattedText = formatPackage(loadedFiles, includeTree);
 
-    outputPreview.textContent = formattedText;
+    outputPreview.value = formattedText;
 
     //enable/disable buttons based on if we have anything to copy or download
     const hasContent = formattedText.trim().length > 0;
@@ -42,17 +42,11 @@ function updateOutput(){
     downloadBtn.disabled = !hasContent;
 }
 
-//Drag and Drop Events
 
-dropZone.addEventListener("dragleave", () => {
-    dropZone.classList.remove("dragover");
-    dropOverlay.classList.add("hidden");
-});
-
-dropZone.addEventListener("drop", async(e) => {
+dropZone.addEventListener("dragover", (e) => {
     e.preventDefault();
-    dropZone.classList.remove("dragover");
-    dropOverlay.classList.add("hidden");
+    dropZone.classList.add("dragover");
+    dropOverlay.classList.remove("hidden");
 });
 
 dropZone.addEventListener("dragleave", () => {
@@ -65,16 +59,10 @@ dropZone.addEventListener("drop", async (e) => {
     dropZone.classList.remove("dragover");
     dropOverlay.classList.add("hidden");
 
-    if(e.dataTransfer.items){
+    if (e.dataTransfer.items) {
         const files = await readDroppedFolder(e.dataTransfer.items);
         handleLoadedFiles(files);
     }
-});
-
-dropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropZone.classList.add("dragover");
-    dropOverlay.classList.remove("hidden");
 });
 
 //FOlder Input Selection
@@ -85,10 +73,6 @@ folderInput.addEventListener("change", async (e)=>{
     }
 });
 
-document.querySelector('.btn-primary').addEventListener('click', (e) => {
-    e.preventDefault();
-    folderInput.click();
-});
 
 //Filter and option Toggles
 smartFilterCheckbox.addEventListener("change", () => {
