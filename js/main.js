@@ -1,7 +1,7 @@
 import { readDroppedFolder, readInputFolder } from "./fileReader.js";
 import { applySmartFilter } from "./filters.js";
 import { formatPackage } from "./formatter.js";
-
+import { renderFileList } from "./ui.js";
 //state
 let loadedFiles = [];
 
@@ -24,61 +24,10 @@ function handleLoadedFiles(rawFiles){
     const smartFilterActive = smartFilterCheckbox.checked;
     loadedFiles = applySmartFilter(rawFiles, smartFilterActive);
 
-    renderFileList();
+    renderFileList(loadedFiles, fileListContainer, fileCountBadge, updateOutput);
     updateOutput();
 }
 
-//func to render file list with checkboxes for toggling inclusion
-function renderFileList(){
-    fileListContainer.innerHTML = "";
-
-    const includedCount = loadedFiles.filter(f => f.included).length;
-    fileCountBadge.textContent = `${includedCount}/${loadedFiles.length} files`;
-
-    if(loadedFiles.length === 0){
-        fileListContainer.innerHTML = '<p class="placeholder-text">No Folder loaded yet.</p>';
-        return;
-    }
-
-    const fragment = document.createDocumentFragment();
-
-    loadedFiles.forEach((file, index)=>{
-        const item = document.createElement("div");
-        item.className = `file-item ${file.included ? "" : "excluded"}`;
-
-        const label = document.createElement("label");
-        label.style.display = "flex";
-        label.style.alignItems = "center";
-        label.style.gap = "8px";
-        label.style.cursor = "pointer";
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = file.included;
-        checkbox.disabled = file.isBinary;
-
-        checkbox.addEventListener("change", () => {
-            loadedFiles[index].included = checkbox.checked;
-            item.classList.toggle("excluded", !checkbox.checked);
-            const activeCount = loadedFiles.filter(f => f.included).length;
-            fileCountBadge.textContent = `${activeCount}/${loadedFiles.length} files`;
-            updateOutput();
-        });
-
-        const pathSpan = document.createElement("span");
-        pathSpan.textContent = file.path;
-        if(file.isBinary){
-            pathSpan.textContent += " (binary - skipped)";
-            pathSpan.style.color = "#888";
-        }
-
-        label.appendChild(checkbox);
-        label.appendChild(pathSpan);
-        item.appendChild(label);
-        fragment.appendChild(item);
-    });
-    fileListContainer.appendChild(fragment);
-}
 
 //Re format output preview and enables/disables action buttons
 function updateOutput(){
@@ -94,11 +43,6 @@ function updateOutput(){
 }
 
 //Drag and Drop Events
-dropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropZone.classList.add("dragover");
-    dropOverlay.classList.remove("hidden");
-});
 
 dropZone.addEventListener("dragleave", () => {
     dropZone.classList.remove("dragover");
@@ -139,7 +83,7 @@ folderInput.addEventListener("change", async (e)=>{
 smartFilterCheckbox.addEventListener("change", () => {
     if(loadedFiles.length>0){
         loadedFiles = applySmartFilter(loadedFiles, smartFilterCheckbox.checked);
-        renderFileList();
+        renderFileList(loadedFiles, fileListContainer, fileCountBadge, updateOutput);
         updateOutput();
     }
 });
