@@ -71,12 +71,23 @@ dropZone.addEventListener("drop", async (e) => {
     }
 });
 
+dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.classList.add("dragover");
+    dropOverlay.classList.remove("hidden");
+});
+
 //FOlder Input Selection
 folderInput.addEventListener("change", async (e)=>{
     if(e.target.files.length > 0){
         const files = await readInputFolder(e.target.files);
         handleLoadedFiles(files);
     }
+});
+
+document.querySelector('.btn-primary').addEventListener('click', (e) => {
+    e.preventDefault();
+    folderInput.click();
 });
 
 //Filter and option Toggles
