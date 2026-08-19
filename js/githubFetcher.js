@@ -12,7 +12,7 @@ export function parseGithubUrl(inputUrl) {
 
     const owner = parts[0];
     const repo = parts[1].replace(/\.git$/, "");
-    let branch = "main";
+    let branch = "";
     let subpath = "";
 
     // Handles URLs like /tree/branch-name/sub/folder
@@ -24,90 +24,104 @@ export function parseGithubUrl(inputUrl) {
     return { owner, repo, branch, subpath };
 }
 
-export function fetchGithubRepo(owner, repo, branch = "main", subpath = "", token = "", onProgress = null) {
+export function fetchGithubRepo(owner, repo, branch = "", subpath = "", token = "", onProgress = null) {
     const headers = {};
     if (token) {
         headers["Authorization"] = `token ${token}`;
     }
 
-    // 1. Fetch file tree metadata from GitHub API
-    const treeApiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+    // 1. Resolve branch if not provided by fetching repository metadata
+    const resolveBranch = branch
+        ? Promise.resolve(branch)
+        : fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers })
+            .then(res => {
+                if(res.status === 403) throw new Error("GitHub API rate limit exceeded. Add a Personal Access Token or wait a bit.");
+                if (res.status === 404) throw new Error("Repository not found. Check if it's private.");
+                if (!res.ok) throw new Error(`GitHub API error (${res.status})`);
+                return res.json();
+            })
+            .then(data => data.default_branch);
 
-    return fetch(treeApiUrl, { headers })
-        .then(res => {
-            if(res.status === 403) {
-                throw new Error("GitHub API rate limit exceeded. Add a Personal Access Token or wait a bit.");
-            }
-            if (res.status === 404) {
-                throw new Error("Repository or branch not found. Check if it's private.");
-            }
-            if (!res.ok) {
-                throw new Error(`GitHub API error (${res.status})`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data.truncated) {
-                console.warn("Repo tree is large and was truncated by GitHub API.");
-            }
+    return resolveBranch.then(resolvedBranch => {
+        // 2. Fetch file tree metadata from GitHub API
+        const treeApiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${resolvedBranch}?recursive=1`;
 
-            // Filter for files (blobs), ignore directories (trees)
-            let files = data.tree.filter(item => item.type === "blob");
+        return fetch(treeApiUrl, { headers })
+            .then(res => {
+                if(res.status === 403) {
+                    throw new Error("GitHub API rate limit exceeded. Add a Personal Access Token or wait a bit.");
+                }
+                if (res.status === 404) {
+                    throw new Error("Repository or branch not found. Check if it's private.");
+                }
+                if (!res.ok) {
+                    throw new Error(`GitHub API error (${res.status})`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.truncated) {
+                    console.warn("Repo tree is large and was truncated by GitHub API.");
+                }
 
-            // Filter by subpath if user provided a specific folder path
-            if (subpath) {
-                files = files.filter(item => item.path.startsWith(subpath + "/") || item.path === subpath);
-            }
-            let loadedCount = 0;
+                // Filter for files (blobs), ignore directories (trees)
+                let files = data.tree.filter(item => item.type === "blob");
 
-            // 2. Fetch contents in parallel batches (5 at a time) to stay fast without hitting browser rate limits
-            const fetchBatch = (items, batchSize = 5) => {
-                const results = [];
-                let index = 0;
+                // Filter by subpath if user provided a specific folder path
+                if (subpath) {
+                    files = files.filter(item => item.path.startsWith(subpath + "/") || item.path === subpath);
+                }
+                let loadedCount = 0;
 
-                function next() {
-                    if (index >= items.length) return Promise.resolve();
-                    const item = items[index++];
-                    
-                    const MAX_SIZE = 1000000; // 1MB
-                    if (item.size > MAX_SIZE) {
-                        loadedCount++;
-                        if (onProgress) onProgress(loadedCount, items.length);
-                        results.push({
-                            path: item.path,
-                            name: item.path.split("/").pop(),
-                            content: null,
-                            isBinary: true,
-                            size: item.size || 0
-                        });
-                        return next();
-                    }
+                // 3. Fetch contents in parallel batches (5 at a time)
+                const fetchBatch = (items, batchSize = 5) => {
+                    const results = [];
+                    let index = 0;
 
-                    const fileUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${item.path}`;
-
-                    return fetch(fileUrl)
-                        .then(res => (res.ok ? res.text() : Promise.resolve(null)))
-                        .catch(() => null)
-                        .then(content => {
+                    function next() {
+                        if (index >= items.length) return Promise.resolve();
+                        const item = items[index++];
+                        
+                        const MAX_SIZE = 1000000; // 1MB
+                        if (item.size > MAX_SIZE) {
                             loadedCount++;
-                            if (onProgress) {
-                                onProgress(loadedCount, items.length);
-                            }
+                            if (onProgress) onProgress(loadedCount, items.length);
                             results.push({
                                 path: item.path,
                                 name: item.path.split("/").pop(),
-                                content: content || "",
-                                isBinary: content === null, // null indicates binary or failed fetch
+                                content: null,
+                                isBinary: true,
                                 size: item.size || 0
                             });
-                        })
-                        .then(() => next());
-                }
+                            return next();
+                        }
 
-                const workers = Array.from({ length: Math.min(batchSize, items.length) }, () => next());
-                return Promise.all(workers).then(() => results);
-            };
+                        const fileUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${resolvedBranch}/${item.path}`;
 
-            return fetchBatch(files);
-        });
+                        return fetch(fileUrl)
+                            .then(res => (res.ok ? res.text() : Promise.resolve(null)))
+                            .catch(() => null)
+                            .then(content => {
+                                loadedCount++;
+                                if (onProgress) {
+                                    onProgress(loadedCount, items.length);
+                                }
+                                results.push({
+                                    path: item.path,
+                                    name: item.path.split("/").pop(),
+                                    content: content || "",
+                                    isBinary: content === null, // null indicates binary or failed fetch
+                                    size: item.size || 0
+                                });
+                            })
+                            .then(() => next());
+                    }
+
+                    const workers = Array.from({ length: Math.min(batchSize, items.length) }, () => next());
+                    return Promise.all(workers).then(() => results);
+                };
+
+                return fetchBatch(files);
+            });
+    });
 }
