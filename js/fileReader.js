@@ -1,7 +1,7 @@
-async function readEntry(entry, currentPath = ""){
+async function readEntry(entry, currentPath = "") {
     const files = [];
 
-    if(entry.isFile){
+    if (entry.isFile) {
         const file = await new Promise((resolve, reject) => {
             entry.file(resolve, reject);
         });
@@ -18,12 +18,16 @@ async function readEntry(entry, currentPath = ""){
         });
     } else if (entry.isDirectory) {
         const dirReader = entry.createReader();
-        const entries = await new Promise((resolve, reject) => {
-            dirReader.readerEntries(resolve, reject);
-        });
+        const entries = [];
+        let batch;
+        do {
+            batch = await new Promise((resolve, reject) => dirReader.readEntries(resolve, reject));
+            entries.push(...batch);
+        } while (batch.length > 0);
+        ;
 
         const newPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
-        for(const childEntry of entries){
+        for (const childEntry of entries) {
             const childFiles = await readEntry(childEntry, newPath);
             files.push(...childFiles);
         }
@@ -32,15 +36,15 @@ async function readEntry(entry, currentPath = ""){
 }
 
 //Read file contents safely as text; marks binary files as null
-async function readFileContent(file){
+async function readFileContent(file) {
     try {
         //Attempt reading first 1000 bytes to check if file is binary
         const buffer = await file.slice(0, 1000).arrayBuffer();
         const bytes = new Uint8Array(buffer);
-        
+
         //Check for null bytes
-        for (let i = 0; i < bytes.length; i++){
-            if(bytes[i] === 0){
+        for (let i = 0; i < bytes.length; i++) {
+            if (bytes[i] === 0) {
                 return null; //Null byte found -> Binary file
             }
         }
@@ -53,11 +57,11 @@ async function readFileContent(file){
 }
 
 //Handles Drag and Drop dataTransfer items
-export async function readDroppedFolder(items){
+export async function readDroppedFolder(items) {
     const files = [];
-    for (const item of items){
+    for (const item of items) {
         const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
-        if(entry){
+        if (entry) {
             const entryFiles = await readEntry(entry);
             files.push(...entryFiles);
         }
@@ -66,9 +70,9 @@ export async function readDroppedFolder(items){
 }
 
 //Handles standard <input type="file" webkitdirectory> selection
-export async function readInputFolder(fileList){
+export async function readInputFolder(fileList) {
     const files = [];
-    for (const file of fileList){
+    for (const file of fileList) {
         const path = file.webkitRelativePath || file.name;
         const content = await readFileContent(file);
 

@@ -25,7 +25,7 @@ export function buildAsciiTree(filePaths){
         const keys = Object.keys(node);
 
         keys.forEach((key, index) => {
-            const isLast = index === keys.Length - 1;
+            const isLast = index === keys.length - 1;
             const connector = isLast ? "└──" : "├──";
             const childPrefix = isLast ? "   " : "|  ";
 

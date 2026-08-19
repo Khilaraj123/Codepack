@@ -30,7 +30,7 @@ function handleLoadedFiles(rawFiles){
 
 //func to render file list with checkboxes for toggling inclusion
 function renderFileList(){
-    fileListContaine.innerHTML = "";
+    fileListContainer.innerHTML = "";
 
     const includedCount = loadedFiles.filter(f => f.included).length;
     fileCountBadge.textContent = `${includedCount}/${loadedFiles.length} files`;
@@ -149,7 +149,7 @@ includeTreeCheckbox.addEventListener("change", updateOutput);
 //copy to clipboard
 copyBtn.addEventListener("click", async () => {
     try {
-        await navigator.writeText(outputPreview.value);
+        await navigator.clipboard.writeText(outputPreview.value);
         const originalText = copyBtn.textContent;
         copyBtn.textContent = "Copied!";
         setTimeout(() => {
