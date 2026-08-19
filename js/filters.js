@@ -34,36 +34,31 @@ const IGNORED_EXTENSIONS = new Set([
 ]);
 
 //Check if a file path matches any smart filter criteria
-export function isIgnoredPath(filePath){
+export function isIgnoredPath(filePath, customExcludes = []){
     const parts = filePath.split("/");
-
-    //Check directory names in path
-    for(const part of parts){
-        if(IGNORED_DIRECTORIES.has(part)){
-            return true;
-        }
-    }
-
     const fileName = parts[parts.length - 1];
 
-    //check exact filename matches
-    if(IGNORED_FILES.has(fileName)){
-        return true;
-    }
-
-    //check file extension
+    //check file extension for known binary formats
     const extension = fileName.includes(".") ? fileName.split(".").pop().toLowerCase() : "";
     if(IGNORED_EXTENSIONS.has(extension)){
         return true;
+    }
+
+    //check custom excludes against exact path segments
+    for (const exclude of customExcludes) {
+        if (parts.includes(exclude)) {
+            return true;
+        }
     }
 
     return false;
 }
 
 //Filters array of files based on smart filter configuration
-export function applySmartFilter(files, enabled = true){
+export function applySmartFilter(files, excludeString = ""){
+    const customExcludes = excludeString.split(",").map(s => s.trim()).filter(Boolean);
     return files.map(file => ({
         ...file,
-        included: enabled ? !isIgnoredPath(file.path) && !file.isBinary : !file.isBinary
+        included: !file.isBinary && !isIgnoredPath(file.path, customExcludes)
     }));
 }

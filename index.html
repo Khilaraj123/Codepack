@@ -16,51 +16,78 @@
     </div>
 
     <div class="app-container">
-        <!-- header -->
+        <!-- Top header -->
         <header class="app-header">
             <div class="logo">
-                <span class="icon">📦</span>
-                <h1>Codepacker</h1>
+                <h1>GitPack</h1>
             </div>
-            <p class="tagline">Pack your codebase into an LLM-ready text file — 100% locally in your browser.</p>
         </header>
 
-        <!-- Top control bar -->
-        <section class="top-bar">
-            <!-- GitHub URL Input (GitIngest Style) -->
-            <div class="github-input-group">
-                <input type="text" id="github-url-input" placeholder="https://github.com/owner/repository"
-                    autocomplete="off" spellcheck="false" />
-                <button id="github-fetch-btn" class="btn-primary">Ingest</button>
-            </div>
-            <div id="loading-status" class="hidden" style="color: var(--text-secondary); font-size: 0.85rem; padding-top: 8px;">
-                <span id="loading-text"></span>
-            </div>
+        <!-- Hero Section -->
+        <div class="hero-section">
+            <h1 class="hero-title">Turn Code into Context</h1>
+            <p class="hero-subtitle">Instantly convert any GitHub repository into a structured text digest, ready for your LLM. Simplify your codebase ingestion process.</p>
+            
+            <div class="ingest-card">
+                <!-- Source Tabs -->
+                <div class="source-tabs">
+                    <button class="source-tab active" data-target="github-source">GitHub Repo</button>
+                    <button class="source-tab" data-target="local-source">Local Directory</button>
+                </div>
+                
+                <!-- Input Areas -->
+                <div class="input-areas">
+                    <!-- GitHub Source -->
+                    <div id="github-source" class="input-pane active">
+                        <div class="github-input-group">
+                            <input type="text" id="github-url-input" placeholder="https://github.com/..." autocomplete="off" spellcheck="false" />
+                            <button id="github-fetch-btn" class="btn-primary btn-ingest">Ingest</button>
+                        </div>
+                        <div id="loading-status" class="hidden">
+                            <span id="loading-text"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Local Source -->
+                    <div id="local-source" class="input-pane">
+                        <div id="drop-zone" class="drop-zone">
+                            <span class="upload-icon">↑</span>
+                            <span>Drag-and-drop upload OR</span>
+                            <label class="btn-browse-link">
+                                Browse
+                                <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+                            </label>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="divider">OR</div>
-
-            <!-- Local Folder Upload -->
-            <div id="drop-zone" class="drop-zone">
-                <span class="upload-icon">📁</span>
-                <span>Drag & Drop Project Folder OR</span>
-                <label class="btn-browse">
-                    Browse Directory
-                    <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
-                </label>
+                <!-- Options Card -->
+                <div class="options-card">
+                    <div class="options-col">
+                        <h4>File Options</h4>
+                        <div class="options-group">
+                            <label>Exclude</label>
+                            <input type="text" id="exclude-input" class="text-input" value="node_modules, dist, .git, .env, bin, obj" />
+                        </div>
+                    </div>
+                    <div class="options-col examples-col">
+                        <h4>Example Repositories</h4>
+                        <div class="pills-container">
+                            <button class="pill-btn" data-repo="https://github.com/microsoft/vscode">VS Code</button>
+                            <button class="pill-btn" data-repo="https://github.com/fastapi/fastapi">FastAPI</button>
+                            <button class="pill-btn" data-repo="https://github.com/pallets/flask">Flask</button>
+                            <button class="pill-btn" data-repo="https://github.com/excalidraw/excalidraw">Excalidraw</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="footer-note">You can also replace 'hub' with 'ingest' in any GitHub URL for quick access.</p>
             </div>
-
+            
             <div class="summary-stats" id="summary-stats">
                 <div class="stat-item">Files: <strong id="stat-files">0</strong></div>
                 <div class="stat-item">Included: <strong id="stat-included">0</strong></div>
             </div>
-        </section>
-
-        <!-- Filters -->
-        <div class="filter-bar">
-            <label class="checkbox-label">
-                <input type="checkbox" id="smart-filter" checked>
-                Apply smart filtering (exclude .env, node_modules, etc.)
-            </label>
         </div>
 
         <!-- Main split workspace -->

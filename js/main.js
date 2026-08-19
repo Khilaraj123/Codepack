@@ -14,7 +14,7 @@ const folderInput = document.getElementById("folder-input");
 const fileListContainer = document.getElementById("file-list");
 const outputPreview = document.getElementById("output-preview");
 const asciiTreePreview = document.getElementById("ascii-tree-preview");
-const smartFilterCheckbox = document.getElementById("smart-filter");
+const excludeInput = document.getElementById("exclude-input");
 const copyBtn = document.getElementById("copy-btn");
 const copyTreeBtn = document.getElementById("copy-tree-btn");
 const downloadBtn = document.getElementById("download-btn");
@@ -71,8 +71,8 @@ function handleGithubFetch() {
 //processes incoming raw file data and refreshes UI
 function handleLoadedFiles(rawFiles) {
     if (!rawFiles || rawFiles.length === 0) return;
-    const smartFilterActive = smartFilterCheckbox.checked;
-    loadedFiles = applySmartFilter(rawFiles, smartFilterActive);
+    const excludeString = excludeInput.value;
+    loadedFiles = applySmartFilter(rawFiles, excludeString);
     renderFileList(loadedFiles, fileListContainer, updateOutput);
     updateOutput();
 }
@@ -109,6 +109,28 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 
         btn.classList.add("active");
         document.getElementById(btn.dataset.view).classList.add("active");
+    });
+});
+
+// Source Tabs Switching
+document.querySelectorAll(".source-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+        document.querySelectorAll(".source-tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".input-pane").forEach(p => p.classList.remove("active"));
+        
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.target).classList.add("active");
+    });
+});
+
+// Example Repositories Pills
+document.querySelectorAll(".pill-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const githubTab = document.querySelector(".source-tab[data-target='github-source']");
+        githubTab.click();
+        
+        githubUrlInput.value = btn.dataset.repo;
+        handleGithubFetch();
     });
 });
 
@@ -149,9 +171,9 @@ dropZone.addEventListener("drop", async (e) => {
 });
 
 //Filter and option Toggles
-smartFilterCheckbox.addEventListener("change", () => {
+excludeInput.addEventListener("input", () => {
     if (loadedFiles.length > 0) {
-        loadedFiles = applySmartFilter(loadedFiles, smartFilterCheckbox.checked);
+        loadedFiles = applySmartFilter(loadedFiles, excludeInput.value);
         renderFileList(loadedFiles, fileListContainer, updateOutput);
         updateOutput();
     }
