@@ -1,116 +1,108 @@
 import { readDroppedFolder, readInputFolder } from "./fileReader.js";
 import { applySmartFilter } from "./filters.js";
-import { formatPackage } from "./formatter.js";
+import { formatPackage, formatTree } from "./formatter.js";
 import { renderFileList } from "./ui.js";
 //state
 let loadedFiles = [];
 
-//DOM element references
+// DOM References
 const dropZone = document.getElementById("drop-zone");
 const folderInput = document.getElementById("folder-input");
 const fileListContainer = document.getElementById("file-list");
-const fileCountBadge = document.getElementById("file-count");
 const outputPreview = document.getElementById("output-preview");
+const asciiTreePreview = document.getElementById("ascii-tree-preview");
 const smartFilterCheckbox = document.getElementById("smart-filter");
-const includeTreeCheckbox = document.getElementById("include-tree");
 const copyBtn = document.getElementById("copy-btn");
+const copyTreeBtn = document.getElementById("copy-tree-btn");
 const downloadBtn = document.getElementById("download-btn");
-const dropOverlay = document.getElementById("drop-overlay");
+const statFiles = document.getElementById("stat-files");
+const statIncluded = document.getElementById("stat-included");
 
 //processes incoming raw file data and refreshes UI
-function handleLoadedFiles(rawFiles){
-    if(!rawFiles || rawFiles.length === 0) return;
-
-    const smartFilterActive = smartFilterCheckbox.checked;
+function handleLoadedFiles(rawFiles) {
+    if (!rawFiles || rawFiles.length === 0) return;
     loadedFiles = applySmartFilter(rawFiles, smartFilterActive);
-
-    renderFileList(loadedFiles, fileListContainer, fileCountBadge, updateOutput);
+    renderFileList(loadedFiles, fileListContainer, null, updateOutput);
     updateOutput();
 }
 
 
 //Re format output preview and enables/disables action buttons
-function updateOutput(){
-    const includeTree = includeTreeCheckbox.checked;
-    const formattedText = formatPackage(loadedFiles, includeTree);
+function updateOutput() {
+    const activeFiles = loadedFiles.filter(f => f.included && !f.isBinary);
 
-    outputPreview.value = formattedText;
+    //stats update
+    statFiles.textContent = loadedFiles.length;
+    statIncluded.textContent = activeFiles.length;
+
+    //Tree View
+    const treeText = formatTree(loadedFiles);
+    asciiTreePreview.textContent = treeText || "No Active Files";
+
+    //File Content
+    const contentsText = formatContent(loadedFiles);
+    outputPreview.value = contentsText;
 
     //enable/disable buttons based on if we have anything to copy or download
-    const hasContent = formattedText.trim().length > 0;
+    const hasContent = contentsText.trim().length > 0;
     copyBtn.disabled = !hasContent;
+    copyTreeBtn.disabled = !treeText.trim().length;
     downloadBtn.disabled = !hasContent;
 }
 
+//Tab Switching Handler
+document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
 
-dropZone.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dropZone.classList.add("dragover");
-    dropOverlay.classList.remove("hidden");
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+    });
 });
 
-dropZone.addEventListener("dragleave", () => {
-    dropZone.classList.remove("dragover");
-    dropOverlay.classList.add("hidden");
+//FOlder Input Selection
+folderInput.addEventListener("change", async (e) => {
+    if (e.target.files.length > 0) {
+        const files = await readInputFolder(e.target.files);
+        handleLoadedFiles(files);
+    }
 });
 
+//drag and drop
+dropZone.addEventListener("dragover", (e) => e.preventDefault());
 dropZone.addEventListener("drop", async (e) => {
     e.preventDefault();
-    dropZone.classList.remove("dragover");
-    dropOverlay.classList.add("hidden");
-
     if (e.dataTransfer.items) {
         const files = await readDroppedFolder(e.dataTransfer.items);
         handleLoadedFiles(files);
     }
 });
 
-//FOlder Input Selection
-folderInput.addEventListener("change", async (e)=>{
-    if(e.target.files.length > 0){
-        const files = await readInputFolder(e.target.files);
-        handleLoadedFiles(files);
-    }
-});
-
-
 //Filter and option Toggles
 smartFilterCheckbox.addEventListener("change", () => {
-    if(loadedFiles.length>0){
+    if (loadedFiles.length > 0) {
         loadedFiles = applySmartFilter(loadedFiles, smartFilterCheckbox.checked);
         renderFileList(loadedFiles, fileListContainer, fileCountBadge, updateOutput);
         updateOutput();
     }
 });
 
-includeTreeCheckbox.addEventListener("change", updateOutput);
-
-//copy to clipboard
-copyBtn.addEventListener("click", async () => {
-    try {
-        await navigator.clipboard.writeText(outputPreview.value);
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = "Copied!";
-        setTimeout(() => {
-            copyBtn.textContent = originalText;
-        }, 2000);
-    } catch (error) {
-        console.error("failed to copy text: ", error);
-    }
-});
+// Clipboard Actions
+copyBtn.addEventListener("click", () => navigator.clipboard.writeText(outputPreview.value));
+copyTreeBtn.addEventListener("click", () => navigator.clipboard.writeText(asciiTreePreview.textContent));
 
 //Download as text file
 downloadBtn.addEventListener("click", () => {
-    const blob = new Blob([outputPreview.value], {type: "text/plain;charset=utf-8"});
+    const blob = new Blob([outputPreview.value], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
 
     a.href = url;
-  a.download = "codepack-output.txt";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+    a.download = "codepack-contents.txt";
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
 });
 
 
