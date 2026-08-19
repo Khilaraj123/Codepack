@@ -1,19 +1,3 @@
-// Worker instance
-let worker;
-function getWorker(onProgress) {
-    if (!worker) {
-        worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
-    }
-    // We override onmessage here because there's only one job running at a time
-    worker.onmessage = (e) => {
-        const { type, done, total } = e.data;
-        if (type === 'progress' && onProgress) {
-            onProgress(done, total);
-        }
-    };
-    return worker;
-}
-
 // Recursively traverse and collect File objects (without reading contents)
 async function collectFiles(entry, currentPath = "") {
     const fileObjects = [];
@@ -39,25 +23,17 @@ async function collectFiles(entry, currentPath = "") {
     return fileObjects;
 }
 
-function processWithWorker(fileObjects, onProgress) {
-    return new Promise((resolve) => {
-        const w = getWorker(onProgress);
-        
-        // Listen for the final 'done' message for this specific job
-        const listener = (e) => {
-            if (e.data.type === 'done') {
-                w.removeEventListener('message', listener);
-                resolve(e.data.files);
-            }
-        };
-        w.addEventListener('message', listener);
-        
-        w.postMessage({ files: fileObjects });
-    });
-}
-
 //Handles Drag and Drop dataTransfer items
-export async function readDroppedFolder(items, onProgress) {
+export async function readDroppedFolder(items) {
+    // Check if a single .zip file was dropped
+    if (items.length === 1 && items[0].kind === 'file') {
+        const file = items[0].getAsFile();
+        if (file && file.name.endsWith('.zip')) {
+            const buffer = await file.arrayBuffer();
+            return { type: 'unzip', buffer, isLocalZip: true };
+        }
+    }
+
     const fileObjects = [];
     for (const item of items) {
         const entry = item.webkitGetAsEntry ? item.webkitGetAsEntry() : null;
@@ -66,15 +42,20 @@ export async function readDroppedFolder(items, onProgress) {
             fileObjects.push(...entryFiles);
         }
     }
-    return processWithWorker(fileObjects, onProgress);
+    return { type: 'local', files: fileObjects };
 }
 
 //Handles standard <input type="file" webkitdirectory> selection
-export async function readInputFolder(fileList, onProgress) {
+export async function readInputFolder(fileList) {
+    if (fileList.length === 1 && fileList[0].name.endsWith('.zip')) {
+        const buffer = await fileList[0].arrayBuffer();
+        return { type: 'unzip', buffer, isLocalZip: true };
+    }
+    
     const fileObjects = [];
     for (const file of fileList) {
         const path = file.webkitRelativePath || file.name;
         fileObjects.push({ file, path });
     }
-    return processWithWorker(fileObjects, onProgress);
+    return { type: 'local', files: fileObjects };
 }

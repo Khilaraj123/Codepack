@@ -8,6 +8,27 @@ import { parseGithubUrl, fetchGithubRepo } from "./githubFetcher.js";
 //state
 let loadedFiles = [];
 
+// Worker Initialization
+const worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+
+function processWithWorker(messageData, transferList, onProgress) {
+    return new Promise((resolve, reject) => {
+        const listener = (e) => {
+            if (e.data.type === 'progress') {
+                if (onProgress) onProgress(e.data.done, e.data.total);
+            } else if (e.data.type === 'done') {
+                worker.removeEventListener('message', listener);
+                resolve(e.data.files);
+            } else if (e.data.type === 'error') {
+                worker.removeEventListener('message', listener);
+                reject(new Error(e.data.error));
+            }
+        };
+        worker.addEventListener('message', listener);
+        worker.postMessage(messageData, transferList);
+    });
+}
+
 // DOM References
 const dropZone = document.getElementById("drop-zone");
 const folderInput = document.getElementById("folder-input");
@@ -52,11 +73,18 @@ function handleGithubFetch() {
         parsed.repo,
         parsed.branch,
         parsed.subpath,
-        githubTokenInput.value.trim(),
-        (loaded, total) => {
-            loadingText.textContent = `Downloading files (${loaded}/${total})...`;
-        }
+        githubTokenInput.value.trim()
     )
+    .then(fetchData => {
+        loadingText.textContent = `Fetching file contents...`;
+        return processWithWorker(
+            fetchData,
+            [],
+            (done, total) => {
+                loadingText.textContent = `Processing files (${done}/${total})...`;
+            }
+        );
+    })
     .then(files => {
         handleLoadedFiles(files);
     })
@@ -143,13 +171,21 @@ folderInput.addEventListener("change", async (e) => {
         loadingStatus.classList.remove("hidden");
         loadingText.textContent = "Processing local files...";
         
-        const files = await readInputFolder(e.target.files, (done, total) => {
-            loadingText.textContent = `Reading files (${done}/${total})...`;
-        });
-        
-        handleLoadedFiles(files);
-        githubFetchBtn.disabled = false;
-        loadingStatus.classList.add("hidden");
+        try {
+            const messageData = await readInputFolder(e.target.files);
+            const transferList = messageData.buffer ? [messageData.buffer] : [];
+            const files = await processWithWorker(
+                messageData,
+                transferList,
+                (done, total) => { loadingText.textContent = `Reading files (${done}/${total})...`; }
+            );
+            handleLoadedFiles(files);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            githubFetchBtn.disabled = false;
+            loadingStatus.classList.add("hidden");
+        }
     }
 });
 
@@ -185,13 +221,21 @@ dropOverlay.addEventListener("drop", async (e) => {
         loadingStatus.classList.remove("hidden");
         loadingText.textContent = "Processing dropped files...";
         
-        const files = await readDroppedFolder(e.dataTransfer.items, (done, total) => {
-            loadingText.textContent = `Reading files (${done}/${total})...`;
-        });
-        
-        handleLoadedFiles(files);
-        githubFetchBtn.disabled = false;
-        loadingStatus.classList.add("hidden");
+        try {
+            const messageData = await readDroppedFolder(e.dataTransfer.items);
+            const transferList = messageData.buffer ? [messageData.buffer] : [];
+            const files = await processWithWorker(
+                messageData,
+                transferList,
+                (done, total) => { loadingText.textContent = `Reading files (${done}/${total})...`; }
+            );
+            handleLoadedFiles(files);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            githubFetchBtn.disabled = false;
+            loadingStatus.classList.add("hidden");
+        }
     }
 });
 
