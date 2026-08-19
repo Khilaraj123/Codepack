@@ -1,7 +1,10 @@
 import { readDroppedFolder, readInputFolder } from "./fileReader.js";
 import { applySmartFilter } from "./filters.js";
-import { formatPackage, formatTree } from "./formatter.js";
+import { formatTree, formatContent } from "./formatter.js";
 import { renderFileList } from "./ui.js";
+import { parseGithubUrl, fetchGithubRepo } from "./githubFetcher.js";
+
+
 //state
 let loadedFiles = [];
 
@@ -17,6 +20,48 @@ const copyTreeBtn = document.getElementById("copy-tree-btn");
 const downloadBtn = document.getElementById("download-btn");
 const statFiles = document.getElementById("stat-files");
 const statIncluded = document.getElementById("stat-included");
+
+
+// Handle GitHub Repositories
+githubFetchBtn.addEventListener("click", handleGithubFetch);
+githubUrlInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") handleGithubFetch();
+});
+
+function handleGithubFetch() {
+    const parsed = parseGithubUrl(githubUrlInput.value);
+
+    if (!parsed) {
+        alert("Please enter a valid GitHub repository URL (e.g. https://github.com/owner/repo)");
+        return;
+    }
+
+    // Show loading state
+    githubFetchBtn.disabled = true;
+    loadingStatus.classList.remove("hidden");
+    loadingText.textContent = `Connecting to GitHub for ${parsed.owner}/${parsed.repo}...`;
+
+    fetchGithubRepo(
+        parsed.owner,
+        parsed.repo,
+        parsed.branch,
+        parsed.subpath,
+        "", // Optional Personal Access Token
+        (loaded, total) => {
+            loadingText.textContent = `Downloading files (${loaded}/${total})...`;
+        }
+    )
+    .then(files => {
+        handleLoadedFiles(files);
+    })
+    .catch(err => {
+        alert(`Error fetching GitHub repo: ${err.message}`);
+    })
+    .finally(() => {
+        githubFetchBtn.disabled = false;
+        loadingStatus.classList.add("hidden");
+    });
+}
 
 //processes incoming raw file data and refreshes UI
 function handleLoadedFiles(rawFiles) {

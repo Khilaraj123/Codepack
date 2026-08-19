@@ -27,6 +27,16 @@
 
         <!-- Top control bar -->
         <section class="top-bar">
+            <!-- GitHub URL Input (GitIngest Style) -->
+            <div class="github-input-group">
+                <input type="text" id="github-url-input" placeholder="https://github.com/owner/repository"
+                    autocomplete="off" spellcheck="false" />
+                <button id="github-fetch-btn" class="btn-primary">Ingest</button>
+            </div>
+
+            <div class="divider">OR</div>
+
+            <!-- Local Folder Upload -->
             <div id="drop-zone" class="drop-zone">
                 <span class="upload-icon">📁</span>
                 <span>Drag & Drop Project Folder OR</span>
