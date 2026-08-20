@@ -281,7 +281,7 @@ downloadBtn.addEventListener("click", () => {
     const a = document.createElement("a");
 
     a.href = url;
-    a.download = "codepack-contents.txt";
+    a.download = "gitpack-contents.txt";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

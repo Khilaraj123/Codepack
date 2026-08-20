@@ -2,7 +2,7 @@
 
 > **Pack your entire codebase into a single, LLM-ready text file — 100% locally in your browser.**
 
-CodePack is a privacy-first, client-side web utility designed to inspect, filter, and package local software projects into structured text summaries optimized for LLMs (ChatGPT, Claude, Gemini, etc.), code reviews, or backups.
+GitPack is a privacy-first, client-side web utility designed to inspect, filter, and package local software projects into structured text summaries optimized for LLMs (ChatGPT, Claude, Gemini, etc.), code reviews, or backups.
 
 ---
 
@@ -30,7 +30,7 @@ CodePack is a privacy-first, client-side web utility designed to inspect, filter
 ## Project Structure
 
 ```text
-codepack/
+gitpack/
 ├── index.html          # Application UI & layout
 ├── style.css           # Styling and visual design
 │
