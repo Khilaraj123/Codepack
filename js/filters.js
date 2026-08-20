@@ -44,6 +44,16 @@ export function isIgnoredPath(filePath, customExcludes = []){
         return true;
     }
 
+    //check against known ignored filenames
+    if(IGNORED_FILES.has(fileName)){
+        return true;
+    }
+
+    //check against known ignored directories
+    if(parts.some(p => IGNORED_DIRECTORIES.has(p))){
+        return true;
+    }
+
     //check custom excludes against exact path segments
     for (const exclude of customExcludes) {
         if (parts.includes(exclude)) {

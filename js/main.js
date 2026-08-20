@@ -198,20 +198,16 @@ window.addEventListener("dragenter", (e) => {
     dropOverlay.classList.remove("hidden");
 });
 
-dropOverlay.addEventListener("dragenter", (e) => {
-    e.preventDefault();
-    dragCounter++;
-});
-
-dropOverlay.addEventListener("dragleave", (e) => {
+window.addEventListener("dragleave", (e) => {
     e.preventDefault();
     dragCounter--;
-    if (dragCounter === 0) {
+    if (dragCounter <= 0) {
+        dragCounter = 0;
         dropOverlay.classList.add("hidden");
     }
 });
 
-dropOverlay.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("dragover", (e) => e.preventDefault());
 dropOverlay.addEventListener("drop", async (e) => {
     e.preventDefault();
     dragCounter = 0;

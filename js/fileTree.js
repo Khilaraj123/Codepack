@@ -32,7 +32,7 @@ export function buildAsciiTree(filePaths){
         keys.forEach((key, index) => {
             const isLast = index === keys.length - 1;
             const connector = isLast ? "└──" : "├──";
-            const childPrefix = isLast ? "   " : "|  ";
+            const childPrefix = isLast ? "    " : "│   ";
 
             output += `${prefix}${connector} ${key}\n`;
 

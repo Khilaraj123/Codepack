@@ -42,7 +42,8 @@ export function fetchGithubRepo(owner, repo, branch = "", subpath = "", token = 
             })
             .then(data => data.default_branch);
 
-        // 2. Fetch file tree metadata from GitHub API
+    // 2. Fetch file tree metadata from GitHub API
+    return resolveBranch.then(resolvedBranch => {
         const treeApiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${resolvedBranch}?recursive=1`;
 
         return fetch(treeApiUrl, { headers })
@@ -80,4 +81,5 @@ export function fetchGithubRepo(owner, repo, branch = "", subpath = "", token = 
                     files
                 };
             });
+    });
 }

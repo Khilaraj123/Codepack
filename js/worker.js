@@ -43,12 +43,13 @@ self.addEventListener('message', async (e) => {
                 });
             } else {
                 const content = await readFileContent(file);
+                const isBinary = content === null;
                 results.push({
                     path: path,
                     name: file.name,
                     size: file.size,
-                    content: content || "",
-                    isBinary: content === null
+                    content: isBinary ? null : content,
+                    isBinary
                 });
             }
 
@@ -142,7 +143,7 @@ self.addEventListener('message', async (e) => {
                     path,
                     name,
                     size,
-                    content: content || "",
+                    content: isBinary ? null : content,
                     isBinary
                 });
 
@@ -183,11 +184,12 @@ self.addEventListener('message', async (e) => {
             try {
                 const res = await fetch(fileUrl);
                 const content = res.ok ? await res.text() : null;
+                const isBinary = content === null;
                 results.push({
                     path: item.path,
                     name: item.path.split("/").pop(),
-                    content: content || "",
-                    isBinary: content === null,
+                    content: isBinary ? null : content,
+                    isBinary,
                     size: item.size || 0
                 });
             } catch (err) {
