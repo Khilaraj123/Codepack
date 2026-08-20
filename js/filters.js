@@ -1,10 +1,12 @@
 const IGNORED_DIRECTORIES = new Set([
-    "node_modules",
+  "node_modules",
   ".git",
   ".svn",
   ".hg",
   ".idea",
   ".vscode",
+  ".vs",
+  "packages",
   "dist",
   "build",
   "out",
@@ -21,7 +23,10 @@ const IGNORED_FILES = new Set([
   "pnpm-lock.yaml",
   "bun.lockb",
   ".DS_Store",
-  "Thumbs.db"
+  "Thumbs.db",
+  ".gitignore",
+  ".gitattributes",
+  ".dockerignore"
 ]);
 
 // Binary / Non-text file extensions to skip
