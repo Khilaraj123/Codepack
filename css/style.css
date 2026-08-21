@@ -612,3 +612,142 @@ button:disabled {
     font-weight: 800;
     color: var(--accent);
 }
+
+/* ==========================================
+   Responsive Design & Mobile Adaptations
+   ========================================== */
+
+@media (max-width: 1024px) {
+    .panel {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-container {
+        padding: 16px 12px;
+        gap: 20px;
+    }
+
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.95rem;
+    }
+
+    .options-card {
+        flex-direction: column;
+        gap: 20px;
+        padding: 16px;
+    }
+
+    .options-col {
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    .github-input-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .github-input-group input#github-token-input {
+        max-width: 100% !important;
+        flex: 1 1 auto !important;
+    }
+
+    .btn-pack {
+        width: 100%;
+    }
+
+    .drop-zone {
+        padding: 24px 16px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .action-buttons {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-buttons button {
+        flex: 1;
+        padding: 10px 8px;
+        font-size: 0.8rem;
+        justify-content: center;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-header {
+        padding: 12px 16px;
+        border-radius: 12px;
+    }
+
+    .logo h1 {
+        font-size: 1.2rem;
+    }
+
+    .logo-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .source-tab {
+        padding: 12px 8px;
+        font-size: 0.85rem;
+    }
+
+    .input-areas {
+        padding: 16px;
+    }
+
+    .summary-stats {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .stat-item {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .tab-btn {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+        flex: 1;
+        text-align: center;
+    }
+
+    .code-preview {
+        margin: 8px;
+        padding: 12px;
+        font-size: 0.8rem;
+    }
+
+    .control-panel textarea {
+        width: calc(100% - 16px);
+        margin: 8px;
+        padding: 12px;
+        font-size: 0.8rem;
+    }
+
+    .file-list {
+        padding: 12px;
+    }
+}
